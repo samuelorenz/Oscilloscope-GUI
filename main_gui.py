@@ -40,7 +40,7 @@ class OscilloscopeGUI(QMainWindow):
         self.setStyleSheet(STYLE_MAIN)
 
         # ---------------------------------------------------------
-        # 1. IMPLEMENTAZIONE REALE DI QTHREAD (Pattern Obbligatorio)
+        # 1. REAL QTHREAD IMPLEMENTATION (Mandatory Pattern)
         # ---------------------------------------------------------
         self.worker_thread = QThread()
         self.worker = OscilloscopeWorker()
@@ -231,7 +231,7 @@ class OscilloscopeGUI(QMainWindow):
         timestamp = time.strftime('%H:%M:%S')
         self.log_txt.append(f"<span style='color: {color};'>[{timestamp}] {msg}</span>")
 
-        # Log persistente su file (best-effort, non blocca la GUI in caso di errore)
+        # Persistent log to file (best-effort, does not block GUI on error)
         try:
             if not os.path.exists(self.log_dir):
                 os.makedirs(self.log_dir, exist_ok=True)
@@ -239,7 +239,7 @@ class OscilloscopeGUI(QMainWindow):
                 prefix = "ERROR " if error else "INFO  "
                 f.write(f"[{timestamp}] {prefix}{msg}\n")
         except Exception:
-            # Evita di generare ulteriori errori in GUI se il disco non è disponibile
+            # Avoid generating further GUI errors if the disk is unavailable
             pass
 
     def on_worker_busy(self, is_busy):

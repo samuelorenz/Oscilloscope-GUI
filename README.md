@@ -1,163 +1,170 @@
-## LeCroy SDA 812zi Professional Suite – Oscilloscope GUI
+# LeCroy SDA 812zi Professional Suite – Oscilloscope GUI
 
-Interfaccia grafica avanzata in **Python / PyQt6** per il controllo remoto di oscilloscopi **LeCroy** (es. serie SDA, WaveMaster) tramite rete **TCP/IP (LXI)**.
+Advanced Graphical Interface in **Python / PyQt6** for remote control of **LeCroy** oscilloscopes (e.g., SDA series, WaveMaster) via **TCP/IP (LXI)** network.
 
-L’obiettivo è sostituire i vecchi pannelli web integrati con una GUI moderna in dark mode, ottimizzata per:
+The goal is to replace the old built-in web panels with a modern dark-mode GUI, optimized for:
 
-- controllo veloce di **timebase, canali, trigger e misure**
-- **live view** dello schermo dello strumento
-- salvataggio di **screenshot** e **forme d’onda** per analisi successive
+- Fast control of **timebase, channels, triggers, and measurements**
+- **Live view** of the instrument's screen
+- Saving **screenshots** and **waveforms** for subsequent analysis
 
 ---
 
-### Caratteristiche principali
+## Main Features
 
-- **Connessione via TCP/IP** a oscilloscopi LeCroy (`TCPIP::<IP>::INSTR`)
-- **Controllo completo dei canali (C1–C4)**:
-  - ON/OFF trace
+- **TCP/IP Connection** to LeCroy oscilloscopes (`TCPIP::<IP>::INSTR`)
+- **Full Control of Channels (C1–C4)**:
+  - Trace ON/OFF
   - Volt/Division, Offset, Coupling, Bandwidth limit, Invert
-  - pulsante rapido **SAVE DATA** per esportare la forma d’onda in binario
-- **Gestione trigger**:
-  - modalità (AUTO, NORM, SINGLE, STOP)
-  - tipo (EDGE, WIDTH, GLITCH, TV)
-  - sorgente, pendenza, livello
-- **Live screen monitor**:
-  - aggiornamento periodico dello schermo tramite comando `SCDP`
-  - visualizzazione ridimensionata in tempo reale
-  - salvataggio screenshot su Desktop (`Screenshots_Oscilloscope`)
-- **Misure automatiche**:
-  - configurazione parametri (P1, P2, …) tramite VBS
-  - lettura di valori come PKPK, MAX, MIN, FREQ, PERIOD
-- **Architettura robusta**:
-  - worker VISA in **QThread** (`visa_worker.py`) separato dalla GUI (`main_gui.py`)
-  - comunicazione thread‑safe tramite **segnali/slot PyQt6**
-  - controlli di sicurezza su coupling 50 Ω e tensioni elevate
+  - **SAVE DATA** quick button to export the waveform in binary format
+- **Trigger Management**:
+  - Mode (AUTO, NORM, SINGLE, STOP)
+  - Type (EDGE, WIDTH, GLITCH, TV)
+  - Source, slope, level
+- **Live Screen Monitor**:
+  - Periodic screen update using the `SCDP` command
+  - Real-time resized visualization
+  - Saves screenshots to the Desktop (`Screenshots_Oscilloscope`)
+- **Automatic Measurements**:
+  - Parameter configuration (P1, P2, …) via VBS
+  - Reading values like PKPK, MAX, MIN, FREQ, PERIOD
+- **Robust Architecture**:
+  - VISA worker runs in a separate **QThread** (`visa_worker.py`) from the GUI (`main_gui.py`)
+  - Thread-safe communication via **PyQt6 signals/slots**
+  - Safety checks on 50 Ω coupling and high voltages
 
 ---
 
-### Requisiti
+## Requirements
 
-- **Python** 3.9+ (consigliato)
-- Dipendenze Python elencate in `requirements.txt`:
+- **Python** 3.9+ (recommended)
+- Python Dependencies listed in `requirements.txt`:
   - `PyQt6`
   - `pyvisa`
-  - `pyvisa-py` (oppure NI‑VISA come backend)
-- Oscilloscopio LeCroy compatibile, raggiungibile via rete (stesso segmento IP del PC)
+  - `pyvisa-py` (or NI‑VISA as the backend)
+- A compatible LeCroy oscilloscope, reachable over the network (same IP subnet as the PC)
 
-Esempio installazione (ambiente virtuale consigliato):
+Installation Example (Virtual Environment recommended):
 
 ```bash
+# Create a virtual environment
 python -m venv .venv
-.venv\Scripts\activate        # Windows
+# Activate it on Windows
+.venv\Scripts\activate
+# Install requirements
 pip install -r requirements.txt
 ```
 
-Se utilizzi NI‑VISA, installa il pacchetto dal sito National Instruments e configura `pyvisa` perché usi quel backend.
+If you use NI-VISA, install the package from the National Instruments website and configure `pyvisa` to use that backend.
 
 ---
 
-### Struttura del progetto
+## Project Structure
 
-- `main.py` – punto di ingresso principale: crea la `QApplication` e apre la finestra `OscilloscopeGUI`.
-- `main_gui.py` – GUI principale a 3 colonne (stato sistema, monitor, canali) + menu, timer live, log eventi.
-- `visa_worker.py` – worker PyQt che gira in un **QThread**:
-  - gestisce connessione VISA, comandi SCPI/VBS, screenshot, misure, export waveform, sync impostazioni.
-- `widgets.py` – widget personalizzati, in particolare `ChannelControl` per ciascun canale C1–C4.
-- `styles.py` – tema dark stile GitHub (stylesheet globale `STYLE_MAIN`).
-- `LEGGIMI.md` – guida utente in italiano (uso operativo).
-- `DOCUMENTAZIONE_TECNICA.md` – documentazione tecnica dettagliata (architettura, flussi, comandi).
+- `main.py` – main entry point: creates the `QApplication` and opens the `OscilloscopeGUI` window.
+- `main_gui.py` – main 3-column GUI (system status, monitor, channels) + menu, live timer, event log.
+- `visa_worker.py` – PyQt worker running in a **QThread**:
+  - handles VISA connection, SCPI/VBS commands, screenshots, measurements, waveform export, settings sync.
+- `widgets.py` – custom widgets, specifically `ChannelControl` for each C1–C4 channel.
+- `styles.py` – GitHub-style dark theme (global stylesheet `STYLE_MAIN`).
+- `USER_GUIDE.md` – User Guide (operational usage).
+- `TECHNICAL_DOCUMENTATION.md` – Detailed technical documentation (architecture, workflows, commands).
 
-Il file `gui_oscilloscopio_pro.py` contiene una versione precedente “monolitica” (GUI + worker nello stesso file) e oggi è superato dalla nuova architettura modulare (`main.py` + `main_gui.py` + `visa_worker.py` + `widgets.py` + `styles.py`).
-
----
-
-### Installazione ed esecuzione
-
-1. **Clona il repository** o copia la cartella del progetto.
-2. (Opzionale ma consigliato) crea un **virtualenv** ed installa i requisiti:
-
-   ```bash
-   python -m venv .venv
-   .venv\Scripts\activate        # Windows
-   pip install -r requirements.txt
-   ```
-
-3. Assicurati che l’oscilloscopio sia:
-   - accessibile via IP dalla tua macchina
-   - configurato per accettare connessioni LXI/TCPIP.
-
-4. Avvia la GUI:
-
-   ```bash
-   python main.py
-   ```
-
-   In alternativa, puoi avviare direttamente la versione precedente:
-
-   ```bash
-   python gui_oscilloscopio_pro.py
-   ```
+The `oscilloscope_gui_pro.py` file contains an older "monolithic" version (GUI + worker in the same file), which is now out-of-date and superseded by the new modular architecture (`main.py` + `main_gui.py` + `visa_worker.py` + `widgets.py` + `styles.py`).
 
 ---
 
-### Utilizzo rapido
+## Installation and Execution
 
-- **Connessione**
-  - Inserisci l’indirizzo IP dell’oscilloscopio nel campo `IP`.
-  - Clicca **CONNECT**.
-  - Se la connessione va a buon fine, il log mostra l’`*IDN?` e l’interfaccia passa allo stato connesso.
+1. **Clone the repository** or copy the project folder.
+2. (Optional but recommended) create a **virtualenv** and install the requirements:
 
-- **Sincronizzazione impostazioni**
-  - Clicca **SYNC FROM SCOPE** per leggere:
+    ```bash
+    # Create the virtual environment
+    python -m venv .venv
+    # Activate the virtual environment
+    .venv\Scripts\activate
+    # Install the dependencies mapped out in requirements.txt
+    pip install -r requirements.txt
+    ```
+
+3. Ensure the oscilloscope is:
+   - Reachable via IP from your machine
+   - Configured to accept LXI/TCPIP connections.
+
+4. Start the GUI:
+
+    ```bash
+    # This will execute the main file starting the script.
+    python main.py
+    ```
+
+    Alternatively, you can launch the older monolithic version:
+
+    ```bash
+    # This launches the old monolithic version.
+    python oscilloscope_gui_pro.py
+    ```
+
+---
+
+## Quick Start
+
+- **Connection**
+  - Enter the oscilloscope's IP address in the `IP` field.
+  - Click **CONNECT**.
+  - If the connection is successful, the log will show the `*IDN?` query result and the interface state will switch to connected.
+
+- **Settings Synchronization**
+  - Click **SYNC FROM SCOPE** to read:
     - timebase (`TIME_DIV`)
-    - stato canali (TRACE, VOLT_DIV, OFFSET, COUPLING, BANDWIDTH, INVERT)
-    - parametri di trigger (MODE, TYPE, SRC, LEVEL).
-  - La GUI si aggiorna senza generare comandi verso lo strumento.
+    - channel status (TRACE, VOLT_DIV, OFFSET, COUPLING, BANDWIDTH, INVERT)
+    - trigger parameters (MODE, TYPE, SRC, LEVEL).
+  - The GUI updates without sending any new application commands back to the instrument.
 
-- **Applicazione impostazioni**
-  - Modifica canali, timebase o trigger nella GUI.
-  - Clicca **APPLY TO SCOPE** per inviare in blocco i comandi (`send_multiple_commands` nel worker).
+- **Apply Settings**
+  - Modify channels, timebase, or trigger in the GUI.
+  - Click **APPLY TO SCOPE** to send all commands in bulk (`send_multiple_commands` inside the worker).
 
 - **Live View & Screenshot**
-  - Clicca **▶ START LIVE STREAM** per abilitare il live refresh dello schermo:
-    - il worker esegue ciclicamente `HCSU` + `SCDP` e invia un `QImage` alla GUI
-    - ogni N cicli viene eseguita anche la sincronizzazione delle impostazioni.
-  - Clicca **📸 SNAPSHOT** per una cattura singola.
-  - Abilita **AUTO-SAVE LIVE** per salvare automaticamente gli screenshot in:
+  - Click **▶ START LIVE STREAM** to enable the live screen refresh:
+    - the worker cyclically sends `HCSU` + `SCDP` commands and passes a `QImage` to the GUI
+    - every N cycles, settings synchronization is also executed.
+  - Click **📸 SNAPSHOT** for a single capture.
+  - Enable **AUTO-SAVE LIVE** to automatically save screenshots in:
     - `Desktop/Screenshots_Oscilloscope`
 
-- **Misure**
-  - Scegli **Source** (C1–C4) e **Type** (PKPK, MAX, MIN, FREQ, PERIOD).
-  - In modalità live, ad ogni ciclo il worker aggiorna la tabella con il valore corrente.
+- **Measurements**
+  - Choose **Source** (C1–C4) and **Type** (PKPK, MAX, MIN, FREQ, PERIOD).
+  - In live mode, upon each cycle the worker updates the table with the current value.
 
-Per dettagli più approfonditi vedi `LEGGIMI.md` e `DOCUMENTAZIONE_TECNICA.md`.
-
----
-
-### Note di sicurezza
-
-- Quando il coupling è impostato a **DC50** (50 Ω) il software:
-  - mostra un **warning** esplicito lato GUI (`ChannelControl.validate_coupling_change`)
-  - impedisce Volt/Div potenzialmente pericolosi lato worker (`send_command` in `visa_worker.py`),
-    bloccando comandi che superano una certa soglia con ingresso a 50 Ω.
-- Durante il **cleanup** (chiusura applicazione) il worker:
-  - ripristina le impostazioni di hardcopy/screenshot dello strumento
-  - rilascia correttamente le risorse VISA.
-
-È comunque responsabilità dell’utente rispettare i limiti di tensione e le specifiche di sicurezza dell’oscilloscopio.
+For deeper details see `USER_GUIDE.md` and `TECHNICAL_DOCUMENTATION.md`.
 
 ---
 
-### Debug e stato del codice
+## Safety Notes
 
-- I file Python principali (`main.py`, `main_gui.py`, `visa_worker.py`, `widgets.py`, `gui_oscilloscopio_pro.py`) risultano **senza errori di linting** e con struttura coerente.
-- La comunicazione tra GUI e worker avviene tramite **QThread** e segnali/slot, senza uso di `threading` nella nuova architettura.
-- Il worker implementa controlli di **busy state** per evitare richieste concorrenti e gestisce gli errori VISA con messaggi espliciti nel log.
+- When coupling is set to **DC50** (50 Ω) the software:
+  - displays an explicit **warning** on the GUI side (`ChannelControl.validate_coupling_change`)
+  - prevents potentially dangerous Volt/Div sizes from the worker side (`send_command` in `visa_worker.py`),
+    blocking commands that exceed a certain threshold with a 50 Ω input.
+- During **cleanup** (closing the application) the worker:
+  - restores the instrument's initial hardcopy/screenshot configuration
+  - properly releases VISA resources.
 
-Se riscontri errori specifici in esecuzione (es. problemi di connessione VISA, crash o comportamenti strani), apri una **issue** su GitHub includendo:
+Regardless, it is ultimately the user's responsibility to adhere to the oscilloscope's voltage limits and safety specifications!
 
-- versione di Python
-- versione di PyQt6 / pyvisa / backend VISA
-- modello di oscilloscopio LeCroy e firmware
-- messaggio di errore comparso nel log o nella console.
+---
 
+## Debug and Code Status
+
+- The main Python files (`main.py`, `main_gui.py`, `visa_worker.py`, `widgets.py`, `oscilloscope_gui_pro.py`) contain **no linting errors** and use a coherent structure.
+- Communication between GUI and worker is managed via **QThread** and signals/slots, avoiding the `threading` module entirely within the new architecture.
+- The worker implements **busy state** controls to avoid concurrent requests and properly handles VISA errors mapping them into straightforward log messages.
+
+If you encounter specific runtime errors (e.g., VISA connection issues, crashes, or strange behaviors), open a **GitHub issue** including:
+
+- Python version
+- PyQt6/pyvisa/VISA backend version
+- LeCroy oscilloscope model and its firmware
+- The explicit error message logged inside the console or the interface's built-in log.

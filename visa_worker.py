@@ -26,10 +26,10 @@ class OscilloscopeWorker(QObject):
 
     def _safety_check_command(self, cmd: str) -> bool:
         """
-        Controlli di sicurezza lato software per protezione 50 Ohm:
-        - Limita Volt/Div se il canale è in DC50.
-        - Limita OFFSET se il canale è in DC50.
-        Ritorna True se il comando è sicuro da eseguire, False altrimenti.
+        Software-side safety checks for 50 Ohm protection:
+        - Limits Volt/Div if the channel is in DC50.
+        - Limits OFFSET if the channel is in DC50.
+        Returns True if the command is safe to execute, False otherwise.
         """
         upper = cmd.upper()
         try:
@@ -41,19 +41,19 @@ class OscilloscopeWorker(QObject):
                 ch = parts[0].split(':')[0]
                 cpl = self.instrument.query(f"{ch}:COUPLING?").strip().upper()
 
-                # Limiti conservativi per 50 Ohm
+                # Conservative limits for 50 Ohm coupling
                 if cpl == "D50":
                     if ":VOLT_DIV" in upper and value > 5.0:
-                        self.error.emit(f"SAFETY ERROR: {parts[0]} in 50 Ω - Volt/Div {value}V troppo alto.")
+                        self.error.emit(f"SAFETY ERROR: {parts[0]} in 50 Ω - Volt/Div {value}V is too high.")
                         return False
                     if ":OFFSET" in upper and abs(value) > 5.0:
-                        self.error.emit(f"SAFETY ERROR: {parts[0]} in 50 Ω - Offset {value}V fuori range sicuro.")
+                        self.error.emit(f"SAFETY ERROR: {parts[0]} in 50 Ω - Offset {value}V is out of safe range.")
                         return False
         except pyvisa.errors.VisaIOError as e:
-            self.error.emit(f"Errore VISA in controlli di sicurezza (COUPLING?): {str(e)}")
+            self.error.emit(f"VISA Error in safety checks (COUPLING?): {str(e)}")
             return False
         except Exception as e:
-            self.error.emit(f"Errore di Sistema in controlli di sicurezza: {str(e)}")
+            self.error.emit(f"System Error in safety checks: {str(e)}")
             return False
 
         return True
@@ -62,7 +62,7 @@ class OscilloscopeWorker(QObject):
     def cleanup(self):
         """Safely restore instrument state and close VISA resources."""
         if not self.instrument:
-            self.error.emit("Errore VISA in cleanup: Nessuno strumento connesso da pulire.")
+            self.error.emit("VISA Error in cleanup: No connected instrument to clean up.")
             return
         
         try:
@@ -70,18 +70,18 @@ class OscilloscopeWorker(QObject):
             self.instrument.write('VBS "app.Hardcopy.AutoSave = ""None"""')
             self.instrument.write('*GTL') # Go To Local 
         except pyvisa.errors.VisaIOError as e:
-            self.error.emit(f"Errore VISA in cleanup (Ripristino stato): {str(e)}")
+            self.error.emit(f"VISA Error in cleanup (State restore): {str(e)}")
         except Exception as e:
-            self.error.emit(f"Errore di Sistema in cleanup (Ripristino stato): {str(e)}")
+            self.error.emit(f"System Error in cleanup (State restore): {str(e)}")
             
         try:
             self.instrument.close()
             if self.rm:
                 self.rm.close()
         except pyvisa.errors.VisaIOError as e:
-            self.error.emit(f"Errore VISA in cleanup (Chiusura risorsa): {str(e)}")
+            self.error.emit(f"VISA Error in cleanup (Resource close): {str(e)}")
         except Exception as e:
-            self.error.emit(f"Errore di Sistema in cleanup (Chiusura risorsa): {str(e)}")
+            self.error.emit(f"System Error in cleanup (Resource close): {str(e)}")
         finally:
             self._is_connected = False
             self.instrument = None
@@ -105,19 +105,19 @@ class OscilloscopeWorker(QObject):
             self.connected.emit(idn.strip())
         except pyvisa.errors.VisaIOError as e:
             self._is_connected = False
-            self.error.emit(f"Errore VISA in connect_to_scope: {str(e)}")
+            self.error.emit(f"VISA Error in connect_to_scope: {str(e)}")
         except Exception as e:
             self._is_connected = False
-            self.error.emit(f"Errore di Sistema in connect_to_scope: {str(e)}")
+            self.error.emit(f"System Error in connect_to_scope: {str(e)}")
 
     @pyqtSlot(str)
     def send_command(self, cmd):
         if not self._is_connected:
-            self.error.emit(f"Errore in send_command: Strumento non connesso, impossibile inviare {cmd}.")
+            self.error.emit(f"Error in send_command: Instrument not connected, unable to send {cmd}.")
             return
             
         if self._is_busy:
-            self.error.emit(f"Errore in send_command: Worker occupato, impossibile inviare {cmd}.")
+            self.error.emit(f"Error in send_command: Worker is busy, unable to send {cmd}.")
             return
 
         if not self._safety_check_command(cmd):
@@ -130,20 +130,20 @@ class OscilloscopeWorker(QObject):
             self.response.emit(f"Cmd OK | ESR: {esr}")
         except pyvisa.errors.VisaIOError as e:
             self._is_connected = False
-            self.error.emit(f"Errore VISA in send_command (Esecuzione {cmd}): {str(e)}")
+            self.error.emit(f"VISA Error in send_command (Execution of {cmd}): {str(e)}")
         except Exception as e:
-            self.error.emit(f"Errore di Sistema in send_command (Esecuzione {cmd}): {str(e)}")
+            self.error.emit(f"System Error in send_command (Execution of {cmd}): {str(e)}")
         finally:
             self._is_busy = False
 
     @pyqtSlot(list)
     def send_multiple_commands(self, cmds):
         if not self._is_connected:
-            self.error.emit("Errore in send_multiple_commands: Strumento non connesso.")
+            self.error.emit("Error in send_multiple_commands: Instrument not connected.")
             return
             
         if self._is_busy:
-            self.error.emit("Errore in send_multiple_commands: Worker attualmente occupato.")
+            self.error.emit("Error in send_multiple_commands: Worker currently busy.")
             return
         
         self._is_busy = True
@@ -157,9 +157,9 @@ class OscilloscopeWorker(QObject):
             self.response.emit(f"Bulk Commands OK | ESR: {esr}")
         except pyvisa.errors.VisaIOError as e:
             self._is_connected = False
-            self.error.emit(f"Errore VISA in send_multiple_commands: {str(e)}")
+            self.error.emit(f"VISA Error in send_multiple_commands: {str(e)}")
         except Exception as e:
-            self.error.emit(f"Errore di Sistema in send_multiple_commands: {str(e)}")
+            self.error.emit(f"System Error in send_multiple_commands: {str(e)}")
         finally:
             self._is_busy = False
             self.busy_state.emit(False)
@@ -167,11 +167,11 @@ class OscilloscopeWorker(QObject):
     @pyqtSlot(tuple)
     def get_screenshot(self, target_size):
         if not self._is_connected:
-            self.error.emit("Errore in get_screenshot: Strumento non connesso.")
+            self.error.emit("Error in get_screenshot: Instrument not connected.")
             return
         
         if self._is_busy:
-            self.error.emit("Errore in get_screenshot: Worker occupato. Richiesta scartata.")
+            self.error.emit("Error in get_screenshot: Worker busy. Request discarded.")
             return 
 
         self._is_busy = True
@@ -192,12 +192,12 @@ class OscilloscopeWorker(QObject):
             if start_index != -1:
                 image_data = raw_data[start_index:]
                 if png_footer not in image_data[-30:]:
-                    self.error.emit("Errore in get_screenshot: Footer PNG IEND non trovato (Dati incompleti o corrotti).")
+                    self.error.emit("Error in get_screenshot: PNG IEND footer not found (Incomplete or corrupted data).")
                     return
 
                 img = QImage.fromData(image_data)
                 if img.isNull():
-                    self.error.emit("Errore in get_screenshot: Render dell'immagine fallito (Null Image).")
+                    self.error.emit("Error in get_screenshot: Failed to render image (Null Image).")
                     return
                 
                 if target_size and len(target_size) == 2 and target_size[0] > 0 and target_size[1] > 0:
@@ -210,12 +210,12 @@ class OscilloscopeWorker(QObject):
                 
                 self.screenshot_ready.emit(img)
             else:
-                self.error.emit("Errore in get_screenshot: Intestazione PNG non trovata nella risposta.")
+                self.error.emit("Error in get_screenshot: PNG header not found in the response.")
         except pyvisa.errors.VisaIOError as e:
             self._is_connected = False
-            self.error.emit(f"Errore VISA in get_screenshot (Interruzione comunicazione): {str(e)}")
+            self.error.emit(f"VISA Error in get_screenshot (Communication interrupted): {str(e)}")
         except Exception as e:
-            self.error.emit(f"Errore di Sistema in get_screenshot: {str(e)}")
+            self.error.emit(f"System Error in get_screenshot: {str(e)}")
         finally:
             self._is_busy = False
             self.refresh_cycle_complete.emit()
@@ -223,11 +223,11 @@ class OscilloscopeWorker(QObject):
     @pyqtSlot(list)
     def fetch_measurements(self, params_config):
         if not self._is_connected:
-            self.error.emit("Errore in fetch_measurements: Strumento non connesso.")
+            self.error.emit("Error in fetch_measurements: Instrument not connected.")
             return
             
         if self._is_busy:
-            self.error.emit("Errore in fetch_measurements: Worker occupato.")
+            self.error.emit("Error in fetch_measurements: Worker busy.")
             return 
 
         self._is_busy = True
@@ -245,20 +245,20 @@ class OscilloscopeWorker(QObject):
             self.measure_ready.emit(results)
         except pyvisa.errors.VisaIOError as e:
             self._is_connected = False
-            self.error.emit(f"Errore VISA in fetch_measurements: {str(e)}")
+            self.error.emit(f"VISA Error in fetch_measurements: {str(e)}")
         except Exception as e:
-            self.error.emit(f"Errore di Sistema in fetch_measurements: {str(e)}")
+            self.error.emit(f"System Error in fetch_measurements: {str(e)}")
         finally:
             self._is_busy = False
 
     @pyqtSlot()
     def fetch_all_settings(self):
         if not self._is_connected:
-            self.error.emit("Errore in fetch_all_settings: Strumento non connesso.")
+            self.error.emit("Error in fetch_all_settings: Instrument not connected.")
             return
             
         if self._is_busy:
-            self.error.emit("Errore in fetch_all_settings: Worker occupato. Sincronizzazione saltata.")
+            self.error.emit("Error in fetch_all_settings: Worker busy. Synchronization skipped.")
             return 
 
         self._is_busy = True
@@ -270,61 +270,61 @@ class OscilloscopeWorker(QObject):
             try: 
                 s['TIME_DIV'] = self.instrument.query("TIME_DIV?").strip()
             except pyvisa.errors.VisaIOError as e: 
-                self.error.emit(f"Errore VISA in fetch_all_settings (TIME_DIV): {str(e)}")
+                self.error.emit(f"VISA Error in fetch_all_settings (TIME_DIV): {str(e)}")
             except Exception as e: 
-                self.error.emit(f"Errore di Sistema in fetch_all_settings (TIME_DIV): {str(e)}")
+                self.error.emit(f"System Error in fetch_all_settings (TIME_DIV): {str(e)}")
 
             # 2. Channels
             for ch in ["C1", "C2", "C3", "C4"]:
                 try: s[f'{ch}:TRACE'] = self.instrument.query(f"{ch}:TRACE?").strip()
-                except pyvisa.errors.VisaIOError as e: self.error.emit(f"Errore VISA in fetch_all_settings ({ch}:TRACE): {str(e)}")
-                except Exception as e: self.error.emit(f"Errore di Sistema in fetch_all_settings ({ch}:TRACE): {str(e)}")
+                except pyvisa.errors.VisaIOError as e: self.error.emit(f"VISA Error in fetch_all_settings ({ch}:TRACE): {str(e)}")
+                except Exception as e: self.error.emit(f"System Error in fetch_all_settings ({ch}:TRACE): {str(e)}")
                 
                 try: s[f'{ch}:VOLT_DIV'] = self.instrument.query(f"{ch}:VOLT_DIV?").strip()
-                except pyvisa.errors.VisaIOError as e: self.error.emit(f"Errore VISA in fetch_all_settings ({ch}:VOLT_DIV): {str(e)}")
-                except Exception as e: self.error.emit(f"Errore di Sistema in fetch_all_settings ({ch}:VOLT_DIV): {str(e)}")
+                except pyvisa.errors.VisaIOError as e: self.error.emit(f"VISA Error in fetch_all_settings ({ch}:VOLT_DIV): {str(e)}")
+                except Exception as e: self.error.emit(f"System Error in fetch_all_settings ({ch}:VOLT_DIV): {str(e)}")
                 
                 try: s[f'{ch}:OFFSET'] = self.instrument.query(f"{ch}:OFFSET?").strip()
-                except pyvisa.errors.VisaIOError as e: self.error.emit(f"Errore VISA in fetch_all_settings ({ch}:OFFSET): {str(e)}")
-                except Exception as e: self.error.emit(f"Errore di Sistema in fetch_all_settings ({ch}:OFFSET): {str(e)}")
+                except pyvisa.errors.VisaIOError as e: self.error.emit(f"VISA Error in fetch_all_settings ({ch}:OFFSET): {str(e)}")
+                except Exception as e: self.error.emit(f"System Error in fetch_all_settings ({ch}:OFFSET): {str(e)}")
                 
                 try: s[f'{ch}:COUPLING'] = self.instrument.query(f"{ch}:COUPLING?").strip()
-                except pyvisa.errors.VisaIOError as e: self.error.emit(f"Errore VISA in fetch_all_settings ({ch}:COUPLING): {str(e)}")
-                except Exception as e: self.error.emit(f"Errore di Sistema in fetch_all_settings ({ch}:COUPLING): {str(e)}")
+                except pyvisa.errors.VisaIOError as e: self.error.emit(f"VISA Error in fetch_all_settings ({ch}:COUPLING): {str(e)}")
+                except Exception as e: self.error.emit(f"System Error in fetch_all_settings ({ch}:COUPLING): {str(e)}")
                 
                 try: s[f'{ch}:BANDWIDTH_LIMIT'] = self.instrument.query(f"{ch}:BANDWIDTH_LIMIT?").strip()
-                except pyvisa.errors.VisaIOError as e: self.error.emit(f"Errore VISA in fetch_all_settings ({ch}:BANDWIDTH_LIMIT): {str(e)}")
-                except Exception as e: self.error.emit(f"Errore di Sistema in fetch_all_settings ({ch}:BANDWIDTH_LIMIT): {str(e)}")
+                except pyvisa.errors.VisaIOError as e: self.error.emit(f"VISA Error in fetch_all_settings ({ch}:BANDWIDTH_LIMIT): {str(e)}")
+                except Exception as e: self.error.emit(f"System Error in fetch_all_settings ({ch}:BANDWIDTH_LIMIT): {str(e)}")
                 
                 try: s[f'{ch}:INVERT'] = self.instrument.query(f"{ch}:INVERT?").strip()
-                except pyvisa.errors.VisaIOError as e: self.error.emit(f"Errore VISA in fetch_all_settings ({ch}:INVERT): {str(e)}")
-                except Exception as e: self.error.emit(f"Errore di Sistema in fetch_all_settings ({ch}:INVERT): {str(e)}")
+                except pyvisa.errors.VisaIOError as e: self.error.emit(f"VISA Error in fetch_all_settings ({ch}:INVERT): {str(e)}")
+                except Exception as e: self.error.emit(f"System Error in fetch_all_settings ({ch}:INVERT): {str(e)}")
 
             # 3. Trigger
             try: s['TRIG_MODE'] = self.instrument.query("TRIG_MODE?").strip()
-            except pyvisa.errors.VisaIOError as e: self.error.emit(f"Errore VISA in fetch_all_settings (TRIG_MODE): {str(e)}")
-            except Exception as e: self.error.emit(f"Errore di Sistema in fetch_all_settings (TRIG_MODE): {str(e)}")
+            except pyvisa.errors.VisaIOError as e: self.error.emit(f"VISA Error in fetch_all_settings (TRIG_MODE): {str(e)}")
+            except Exception as e: self.error.emit(f"System Error in fetch_all_settings (TRIG_MODE): {str(e)}")
             
             try:
                 trse = self.instrument.query("TRIG_SELECT?").strip().split(',')
                 if len(trse) > 0: s['TRIG_TYPE'] = trse[0]
                 if len(trse) > 2: s['TRIG_SRC'] = trse[2]
             except pyvisa.errors.VisaIOError as e: 
-                self.error.emit(f"Errore VISA in fetch_all_settings (TRIG_SELECT): {str(e)}")
+                self.error.emit(f"VISA Error in fetch_all_settings (TRIG_SELECT): {str(e)}")
             except Exception as e: 
-                self.error.emit(f"Errore di Sistema in fetch_all_settings (TRIG_SELECT): {str(e)}")
+                self.error.emit(f"System Error in fetch_all_settings (TRIG_SELECT): {str(e)}")
 
             # Trigger Level
             if 'TRIG_SRC' in s and s['TRIG_SRC'] in ["C1","C2","C3","C4"]:
                 try: s['TRIG_LVL'] = self.instrument.query(f"{s['TRIG_SRC']}:TRIG_LEVEL?").strip()
-                except pyvisa.errors.VisaIOError as e: self.error.emit(f"Errore VISA in fetch_all_settings (TRIG_LEVEL per {s['TRIG_SRC']}): {str(e)}")
-                except Exception as e: self.error.emit(f"Errore di Sistema in fetch_all_settings (TRIG_LEVEL per {s['TRIG_SRC']}): {str(e)}")
+                except pyvisa.errors.VisaIOError as e: self.error.emit(f"VISA Error in fetch_all_settings (TRIG_LEVEL for {s['TRIG_SRC']}): {str(e)}")
+                except Exception as e: self.error.emit(f"System Error in fetch_all_settings (TRIG_LEVEL for {s['TRIG_SRC']}): {str(e)}")
 
             if s: 
                 self.settings_ready.emit(s)
                 
         except Exception as e:
-            self.error.emit(f"Errore critico in fetch_all_settings (Loop principale): {str(e)}")
+            self.error.emit(f"Critical Error in fetch_all_settings (Main loop): {str(e)}")
         finally:
             self._is_busy = False
             self.busy_state.emit(False)
@@ -332,11 +332,11 @@ class OscilloscopeWorker(QObject):
     @pyqtSlot(str, str)
     def export_waveform(self, channel, file_path):
         if not self._is_connected:
-            self.error.emit("Errore in export_waveform: Strumento non connesso.")
+            self.error.emit("Error in export_waveform: Instrument not connected.")
             return
             
         if self._is_busy:
-            self.error.emit("Errore in export_waveform: Worker occupato.")
+            self.error.emit("Error in export_waveform: Worker busy.")
             return
         
         self._is_busy = True
@@ -349,8 +349,8 @@ class OscilloscopeWorker(QObject):
             self.export_finished.emit(f"Waveform {channel} saved to {os.path.basename(file_path)}")
         except pyvisa.errors.VisaIOError as e:
             self._is_connected = False
-            self.error.emit(f"Errore VISA in export_waveform (Estrazione DAT1 su {channel}): {str(e)}")
+            self.error.emit(f"VISA Error in export_waveform (DAT1 extraction on {channel}): {str(e)}")
         except Exception as e:
-            self.error.emit(f"Errore di Sistema in export_waveform (Salvataggio file su {channel}): {str(e)}")
+            self.error.emit(f"System Error in export_waveform (File save on {channel}): {str(e)}")
         finally:
             self._is_busy = False
