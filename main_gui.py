@@ -34,6 +34,8 @@ class OscilloscopeGUI(QMainWindow):
         self._is_syncing = False
         self.screenshot_count = 0
         self.screenshot_dir = os.path.join(os.path.expanduser("~"), "Desktop", "Screenshots_Oscilloscope")
+        self.log_dir = os.path.join(os.path.expanduser("~"), "Desktop", "Oscilloscope_Logs")
+        self.log_file_path = os.path.join(self.log_dir, f"session_{time.strftime('%Y%m%d_%H%M%S')}.log")
         
         self.setStyleSheet(STYLE_MAIN)
 
@@ -226,7 +228,19 @@ class OscilloscopeGUI(QMainWindow):
 
     def log(self, msg, error=False):
         color = "#f85149" if error else "#7ee787"
-        self.log_txt.append(f"<span style='color: {color};'>[{time.strftime('%H:%M:%S')}] {msg}</span>")
+        timestamp = time.strftime('%H:%M:%S')
+        self.log_txt.append(f"<span style='color: {color};'>[{timestamp}] {msg}</span>")
+
+        # Log persistente su file (best-effort, non blocca la GUI in caso di errore)
+        try:
+            if not os.path.exists(self.log_dir):
+                os.makedirs(self.log_dir, exist_ok=True)
+            with open(self.log_file_path, "a", encoding="utf-8") as f:
+                prefix = "ERROR " if error else "INFO  "
+                f.write(f"[{timestamp}] {prefix}{msg}\n")
+        except Exception:
+            # Evita di generare ulteriori errori in GUI se il disco non è disponibile
+            pass
 
     def on_worker_busy(self, is_busy):
         self.apply_to_btn.setEnabled(not is_busy)
@@ -239,9 +253,10 @@ class OscilloscopeGUI(QMainWindow):
 
     def toggle_connection(self):
         if self.worker._is_connected: 
-            self.worker._is_connected = False
+            self.log("Disconnecting from instrument...")
+            self.request_cleanup.emit()
             self.connect_btn.setText("CONNECT")
-            self.pulse_heartbeat(self.worker._is_connected)
+            self.pulse_heartbeat(False)
         else:
             self.request_connect.emit(self.ip_input.text())
 

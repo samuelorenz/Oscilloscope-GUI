@@ -24,6 +24,40 @@ class OscilloscopeWorker(QObject):
         self._is_connected = False
         self._is_busy = False
 
+    def _safety_check_command(self, cmd: str) -> bool:
+        """
+        Controlli di sicurezza lato software per protezione 50 Ohm:
+        - Limita Volt/Div se il canale è in DC50.
+        - Limita OFFSET se il canale è in DC50.
+        Ritorna True se il comando è sicuro da eseguire, False altrimenti.
+        """
+        upper = cmd.upper()
+        try:
+            if ":VOLT_DIV" in upper or ":OFFSET" in upper:
+                parts = cmd.split()
+                if len(parts) < 2:
+                    return True
+                value = float(parts[1])
+                ch = parts[0].split(':')[0]
+                cpl = self.instrument.query(f"{ch}:COUPLING?").strip().upper()
+
+                # Limiti conservativi per 50 Ohm
+                if cpl == "D50":
+                    if ":VOLT_DIV" in upper and value > 5.0:
+                        self.error.emit(f"SAFETY ERROR: {parts[0]} in 50 Ω - Volt/Div {value}V troppo alto.")
+                        return False
+                    if ":OFFSET" in upper and abs(value) > 5.0:
+                        self.error.emit(f"SAFETY ERROR: {parts[0]} in 50 Ω - Offset {value}V fuori range sicuro.")
+                        return False
+        except pyvisa.errors.VisaIOError as e:
+            self.error.emit(f"Errore VISA in controlli di sicurezza (COUPLING?): {str(e)}")
+            return False
+        except Exception as e:
+            self.error.emit(f"Errore di Sistema in controlli di sicurezza: {str(e)}")
+            return False
+
+        return True
+
     @pyqtSlot()
     def cleanup(self):
         """Safely restore instrument state and close VISA resources."""
@@ -85,21 +119,9 @@ class OscilloscopeWorker(QObject):
         if self._is_busy:
             self.error.emit(f"Errore in send_command: Worker occupato, impossibile inviare {cmd}.")
             return
-        
-        if ":VOLT_DIV" in cmd.upper():
-            try:
-                parts = cmd.split()
-                if len(parts) >= 2 and float(parts[1]) > 5.0:
-                    cpl = self.instrument.query(f"{parts[0].split(':')[0]}:COUPLING?").strip().upper()
-                    if cpl == "D50":
-                        self.error.emit(f"SAFETY ERROR: {parts[0]} bloccato a 50 Ohm! Tensione {parts[1]}V troppo alta.")
-                        return
-            except pyvisa.errors.VisaIOError as e:
-                self.error.emit(f"Errore VISA in send_command (Controllo sicurezza Volt/Div): {str(e)}")
-                return
-            except Exception as e:
-                self.error.emit(f"Errore di Sistema in send_command (Controllo sicurezza Volt/Div): {str(e)}")
-                return
+
+        if not self._safety_check_command(cmd):
+            return
 
         self._is_busy = True
         try:
@@ -128,6 +150,8 @@ class OscilloscopeWorker(QObject):
         self.busy_state.emit(True)
         try:
             for cmd in cmds:
+                if not self._safety_check_command(cmd):
+                    continue
                 self.instrument.write(cmd)
             esr = self.instrument.query("*ESR?").strip()
             self.response.emit(f"Bulk Commands OK | ESR: {esr}")
