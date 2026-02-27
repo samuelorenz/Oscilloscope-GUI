@@ -70,8 +70,6 @@ If you use NI-VISA, install the package from the National Instruments website an
 - `USER_GUIDE.md` – User Guide (operational usage).
 - `TECHNICAL_DOCUMENTATION.md` – Detailed technical documentation (architecture, workflows, commands).
 
-The `oscilloscope_gui_pro.py` file contains an older "monolithic" version (GUI + worker in the same file), which is now out-of-date and superseded by the new modular architecture (`main.py` + `main_gui.py` + `visa_worker.py` + `widgets.py` + `styles.py`).
-
 ---
 
 ## Installation and Execution
@@ -97,13 +95,6 @@ The `oscilloscope_gui_pro.py` file contains an older "monolithic" version (GUI +
     ```bash
     # This will execute the main file starting the script.
     python main.py
-    ```
-
-    Alternatively, you can launch the older monolithic version:
-
-    ```bash
-    # This launches the old monolithic version.
-    python oscilloscope_gui_pro.py
     ```
 
 ---
@@ -158,7 +149,7 @@ Regardless, it is ultimately the user's responsibility to adhere to the oscillos
 
 ## Debug and Code Status
 
-- The main Python files (`main.py`, `main_gui.py`, `visa_worker.py`, `widgets.py`, `oscilloscope_gui_pro.py`) contain **no linting errors** and use a coherent structure.
+- The main Python files (`main.py`, `main_gui.py`, `visa_worker.py`, `widgets.py`) contain **no linting errors** and use a coherent structure.
 - Communication between GUI and worker is managed via **QThread** and signals/slots, avoiding the `threading` module entirely within the new architecture.
 - The worker implements **busy state** controls to avoid concurrent requests and properly handles VISA errors mapping them into straightforward log messages.
 
