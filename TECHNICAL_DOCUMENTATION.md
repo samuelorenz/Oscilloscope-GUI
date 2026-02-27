@@ -1,12 +1,12 @@
-# TECHNICAL DOCUMENTATION: LeCroy SDA 812zi Professional Suite
+# TECHNICAL DOCUMENTATION: Professional Oscilloscope Suite
 
-This documentation provides a detailed explanation of the logic, architecture, and technologies used in the control software for LeCroy oscilloscopes.
+This documentation provides a detailed explanation of the logic, architecture, and technologies used in the control software for professional oscilloscopes.
 
 ---
 
 ## 1. Software Objective
 
-The software allows full remote control of LeCroy oscilloscopes (SDA series, WaveMaster, etc.) via Ethernet connection (TCP/IP). It is designed to provide a modern interface (GitHub Dark style) that overcomes the limitations of the old built-in web panels on the instruments.
+The software allows full remote control of compatible oscilloscopes via Ethernet connection (TCP/IP). It is designed to provide a modern interface (GitHub Dark style) that overcomes the limitations of the old built-in web panels on the instruments.
 
 ## 2. Technological Architecture
 
@@ -27,9 +27,9 @@ To talk to the oscilloscope, the industrial standard **VISA** (Virtual Instrumen
 - **Backend**: Uses `pyvisa`, which interfaces with the NI-VISA or Keysight libraries installed on the PC.
 - **Protocol**: TCP/IP (LXI). The oscilloscope is identified via its IP address with the string: `TCPIP::<IP>::INSTR`.
 
-### C. Command Language (LeCroy VBS)
+### C. Command Language (Automation Model)
 
-In addition to standard SCPI commands (e.g., `*IDN?`), the software leverages the power of the **LeCroy Automation Object Model** via **VBS** (Visual Basic Scripting) commands.
+In addition to standard SCPI commands (e.g., `*IDN?`), the software leverages the power of the instrument's **Automation Object Model** via **VBS** (Visual Basic Scripting) commands.
 
 - This provides access to deep instrument functions (e.g., `app.Measure.P1.Out.Result.Value`) that would not be reachable with simple textual commands.
 

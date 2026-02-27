@@ -1,8 +1,8 @@
-# LeCroy SDA 812zi Professional Suite – Oscilloscope GUI
+# Professional Oscilloscope Suite – GUI
 
-Advanced Graphical Interface in **Python / PyQt6** for remote control of **LeCroy** oscilloscopes (e.g., SDA series, WaveMaster) via **TCP/IP (LXI)** network.
+Advanced Graphical Interface in **Python / PyQt6** for remote control of compatible oscilloscopes via **TCP/IP (LXI)** network.
 
-The goal is to replace the old built-in web panels with a modern dark-mode GUI, optimized for:
+The goal is to replace old built-in web panels with a modern dark-mode GUI, optimized for:
 
 - Fast control of **timebase, channels, triggers, and measurements**
 - **Live view** of the instrument's screen
@@ -12,7 +12,7 @@ The goal is to replace the old built-in web panels with a modern dark-mode GUI, 
 
 ## Main Features
 
-- **TCP/IP Connection** to LeCroy oscilloscopes (`TCPIP::<IP>::INSTR`)
+- **TCP/IP Connection** to compatible oscilloscopes (`TCPIP::<IP>::INSTR`)
 - **Full Control of Channels (C1–C4)**:
   - Trace ON/OFF
   - Volt/Division, Offset, Coupling, Bandwidth limit, Invert
@@ -26,7 +26,7 @@ The goal is to replace the old built-in web panels with a modern dark-mode GUI, 
   - Real-time resized visualization
   - Saves screenshots to the Desktop (`Screenshots_Oscilloscope`)
 - **Automatic Measurements**:
-  - Parameter configuration (P1, P2, …) via VBS
+  - Parameter configuration (P1, P2, …) via automation commands
   - Reading values like PKPK, MAX, MIN, FREQ, PERIOD
 - **Robust Architecture**:
   - VISA worker runs in a separate **QThread** (`visa_worker.py`) from the GUI (`main_gui.py`)
@@ -41,8 +41,8 @@ The goal is to replace the old built-in web panels with a modern dark-mode GUI, 
 - Python Dependencies listed in `requirements.txt`:
   - `PyQt6`
   - `pyvisa`
-  - `pyvisa-py` (or NI‑VISA as the backend)
-- A compatible LeCroy oscilloscope, reachable over the network (same IP subnet as the PC)
+  - `pyvisa-py`
+- A compatible oscilloscope, reachable over the network
 
 Installation Example (Virtual Environment recommended):
 
@@ -157,5 +157,5 @@ If you encounter specific runtime errors (e.g., VISA connection issues, crashes,
 
 - Python version
 - PyQt6/pyvisa/VISA backend version
-- LeCroy oscilloscope model and its firmware
+- Instrument model and firmware version
 - The explicit error message logged inside the console or the interface's built-in log.

@@ -26,7 +26,7 @@ class OscilloscopeGUI(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("LeCroy SDA 812zi Professional Suite")
+        self.setWindowTitle("Professional Oscilloscope Suite")
         self.resize(1400, 950)
         self._auto_apply = True
         self._live_active = False
@@ -94,7 +94,7 @@ class OscilloscopeGUI(QMainWindow):
         setup_menu.addAction("Import Device Setup", self.import_setup)
         
         info_menu = menubar.addMenu("Info")
-        info_menu.addAction("About", lambda: self.log("LeCroy SDA Professional Suite v2.1"))
+        info_menu.addAction("About", lambda: self.log("Professional Oscilloscope Suite v2.1"))
 
     def init_ui(self):
         central = QWidget(); self.setCentralWidget(central); main_layout = QHBoxLayout(central)
