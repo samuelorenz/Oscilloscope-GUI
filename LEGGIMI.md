@@ -1,27 +1,39 @@
-# Guida all'uso della GUI per Oscilloscopio LeCroy
+# User Guide for LeCroy Oscilloscope GUI
 
-Questa interfaccia grafica (GUI) permette di controllare agevolmente un oscilloscopio LeCroy tramite rete (TCPIP).
+This graphical user interface (GUI) allows you to easily control a LeCroy oscilloscope over a network (TCP/IP).
 
-## Requisiti
+## Requirements
+
 - Python 3.x
-- Librerie: `PyQt6`, `pyvisa`, `pyvisa-py` (o NI-VISA)
-- Connessione di rete all'oscilloscopio
+- Libraries: `PyQt6`, `pyvisa`, `pyvisa-py` (or NI-VISA)
+- Network connection to the oscilloscope
 
-## Funzionalità
-1. **Connessione**: Inserisci l'indirizzo IP del tuo oscilloscopio e clicca su **CONNECT**. La barra di stato ti confermerà l'avvenuta connessione.
-2. **Horizontal**: Imposta la base dei tempi (Time/Division).
-3. **Vertical**: Controlla il Canale 1 (Attivazione, Volt/Division, Offset).
-4. **Trigger**: Imposta la modalità (Auto, Normal, Single, Stop), la sorgente, la pendenza e il livello.
-5. **Sync from Scope**: Legge i parametri attuali dall'oscilloscopio e aggiorna l'interfaccia.
-6. **Apply Settings**: Invia tutti i parametri impostati sulla GUI all'oscilloscopio.
-7. **Get Screenshot**: Cattura e visualizza l'anteprima dello schermo dell'oscilloscopio direttamente nell'interfaccia.
+## Features
 
-## Esecuzione
-Per avviare la GUI, esegui il comando:
+1. **Connection**: Enter the IP address of your oscilloscope and click **CONNECT**. The status bar will confirm the successful connection.
+2. **Horizontal**: Set the time base (Time/Division).
+3. **Vertical**: Control Channel 1 (Activation, Volt/Division, Offset).
+4. **Trigger**: Set the mode (Auto, Normal, Single, Stop), source, slope, and level.
+5. **Sync from Scope**: Reads the current parameters from the oscilloscope and updates the interface.
+6. **Apply Settings**: Sends all parameters set on the GUI to the oscilloscope.
+7. **Get Screenshot**: Captures and previews the oscilloscope screen directly in the interface.
+
+## Execution
+
+To start the GUI, open your terminal or command prompt in the directory where the file is located and run the following command:
+
 ```bash
+# This uses the default 'python' command to execute the script.
+# Make sure Python 3.x is installed and added to your system's PATH.
+# The script 'gui_oscilloscopio_pro.py' contains the main application logic.
 python gui_oscilloscopio_pro.py
 ```
-o se usi il launcher di Windows:
+
+Or if you are using the Windows Python Launcher (`py.exe`), which automatically finds the installed Python version:
+
 ```bash
+# 'py' is the Python Launcher for Windows.
+# It's an alternative to calling 'python' directly and helps manage multiple Python versions.
+# Executing this will launch the PyQt6 interface for the oscilloscope.
 py gui_oscilloscopio_pro.py
 ```
